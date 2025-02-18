@@ -1,49 +1,77 @@
 import socket
+import threading # Solves issue with waiting for sender/clients
 import tkinter as tk
-from tkinter import filedialog, scrolledtext
+from tkinter import scrolledtext
 
-if __name__ == "__main__":
-    # Socket parameters
+def start_server():
+    """ Starts the server in a separate thread """
+    try:
+        total_clients = int(client_entry.get())
+        log_message(f"Server started, waiting for {total_clients} clients...")
 
-    host = "127.0.0.1"
-    port = 8080
-    totalClients = int(input("Enter number of clients: "))
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # (IPv4, TCP)
-    # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)
-    sock.bind((host, port))
-    sock.listen(totalClients)
-    connections = []
-    print("Initiating clients")
+        threading.Thread(target=server_logic, args=(total_clients,), daemon=True).start()
+    
+    except ValueError:
+        log_message("Error: Please enter a valid number of clients!")
 
+def server_logic(total_clients):
 
-    for i in range(totalClients):
-        conn = sock.accept()
-        connections.append(conn) # Stores into connections list
-        print("connected with client", i + 1)
+    try:
+        sock.listen(total_clients)
+        connections = []
 
-    fileno = 0
-    index = 0 
+        for i in range(total_clients):
+            conn, addr = sock.accept()
+            connections.append(conn) # Stores into connections list
+            log_message(f"Connected with client {i + 1}")
 
-    for conn in connections:
-        index = index + 1
-        data = conn[0].recv(1024).decode()
-        if not data:
-            continue
-        filename = 'output'+str(fileno)+'.txt'
-        fileno = fileno + 1
-        fileopen = open(filename, 'w')
-        while data:
+        # Receiving files
+        fileno = 0
+        for conn in connections:
+            data = conn.recv(1024).decode()
             if not data:
-                break
-            else:
-                fileopen.write(data)
-                data = conn[0].recv(1024).decode()
-        print()
-        print('Receiving file from client', index)
-        print()
-        print('Received succesfully! New filename is: ', filename)
-        fileopen.close()
+                continue
+            
+            filename = f'output{fileno}.txt'
+            fileno = fileno + 1
 
-    # Closing connections
-    for con in connections:
-        conn[0].close()
+            with open(filename, 'w') as fileopen:
+                while data:
+                    fileopen.write(data)
+                    data = conn.recv(1024).decode()
+            
+            log_message(f"Received file successfully! New filename: {filename}")
+
+        for conn in connections: # Closing all connections
+            conn.close()
+        log_message("Server shut down")
+
+    except Exception as e:
+        log_message(f"Error: {e}")
+
+def log_message(message):
+    """ Logs messages to the UI in a thread-safe way """
+    log_text.insert(tk.END, message + "\n")
+    log_text.insert(tk.END, "------------------------------------------------------------" + "\n")
+    log_text.see(tk.END)
+
+host = "127.0.0.1"
+port = 8080
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # (IPv4, TCP)
+# sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)
+sock.bind((host, port))
+
+root = tk.Tk()
+root.title("Receiver")
+
+tk.Label(root, text="How many clients are you connecting with?").pack()
+
+client_entry = tk.Entry(root, width=10)
+client_entry.pack()
+
+tk.Button(root, text="Start Server", command=start_server).pack()
+
+log_text = scrolledtext.ScrolledText(root, width=60, height=10)
+log_text.pack()
+
+root.mainloop()
