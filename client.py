@@ -7,7 +7,7 @@ if __name__ == "__main__":
     host = '127.0.0.1'
     port = 8080
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # (IPv4, TCP)
-    # sock.bind((host, port))
+    # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)
     sock.connect((host,port))
 
     # File transfer

@@ -9,6 +9,7 @@ if __name__ == "__main__":
     port = 8080
     totalClients = int(input("Enter number of clients: "))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # (IPv4, TCP)
+    # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)
     sock.bind((host, port))
     sock.listen(totalClients)
     connections = []
