@@ -33,7 +33,8 @@ def log_message(message):
     log_text.insert(tk.END, "------------------------------------------------------------" + "\n")
     log_text.see(tk.END)
 
-host = '127.0.0.1'
+# host = '127.0.0.1'
+host = '206.12.244.237' # Use the actual server IP address
 port = 8080
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # (IPv4, TCP)
 # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)

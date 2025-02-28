@@ -55,7 +55,8 @@ def log_message(message):
     log_text.insert(tk.END, "------------------------------------------------------------" + "\n")
     log_text.see(tk.END)
 
-host = "127.0.0.1"
+# host = "127.0.0.1" # Replace with server's local IP address
+host = "0.0.0.0" # This allows connections from any machine on the network
 port = 8080
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # (IPv4, TCP)
 # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)
