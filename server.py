@@ -32,13 +32,15 @@ def server_logic(total_clients):
             if not data:
                 continue
             
-            filename = f'output{fileno}.txt'
             fileno = fileno + 1
+            filename = f'output{fileno}.txt'
 
             with open(filename, 'w') as fileopen:
-                while data:
-                    fileopen.write(data)
+                while True:
                     data = conn.recv(1024).decode()
+                    if not data or data.endswith("EOF"):  # Detect end of file
+                        break
+                    fileopen.write(data)
             
             log_message(f"Received file successfully! New filename: {filename}")
 

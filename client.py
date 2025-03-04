@@ -23,6 +23,7 @@ def send_file():
                 return
             
             sock.send(data.encode())
+            sock.send(b"EOF")  # Send EOF marker (MUST)
             log_message(f"Sent file: {filename}")
 
     except IOError as error:
