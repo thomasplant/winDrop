@@ -31,7 +31,9 @@ def log_message(message):
     log_text.see(tk.END)
 
 # Replace with actual server IP address
-server_ip = "192.168.X.X"  # Change to the real QUIC server IP
+# server_ip = "192.168.X.X"  # Change to the real QUIC server IP
+server_ip = "127.0.0.1"  # Localhost for same-machine testing
+
 
 # Tkinter UI
 root = tk.Tk()
@@ -41,7 +43,9 @@ tk.Label(root, text="Select a file to send:").pack()
 file_entry = tk.Entry(root, width=50)
 file_entry.pack()
 tk.Button(root, text="Browse", command=select_file).pack()
-tk.Button(root, text="Send File", command=lambda: asyncio.run(send_file())).pack()
+# tk.Button(root, text="Send File", command=lambda: asyncio.run(send_file())).pack()
+tk.Button(root, text="Send File", command=lambda: asyncio.create_task(send_file())).pack()
+
 
 log_text = scrolledtext.ScrolledText(root, width=60, height=10)
 log_text.pack()
