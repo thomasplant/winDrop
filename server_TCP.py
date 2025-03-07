@@ -28,17 +28,17 @@ def server_logic(total_clients):
         # Receiving files
         fileno = 0
         for conn in connections:
-            data = conn.recv(1024).decode()
-            if not data:
-                continue
+            # data = conn.recv(1024)
+            # if not data:
+            #     continue
             
             fileno = fileno + 1
-            filename = f'output{fileno}.txt'
+            filename = f'output{fileno}'
 
-            with open(filename, 'w') as fileopen:
+            with open(filename, 'wb') as fileopen:
                 while True:
-                    data = conn.recv(1024).decode()
-                    if not data or data.endswith("EOF"):  # Detect end of file
+                    data = conn.recv(1024)
+                    if not data or data.endswith(b"EOF"):  # Detect end of file
                         break
                     fileopen.write(data)
             
