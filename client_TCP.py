@@ -16,13 +16,15 @@ def send_file():
         return
     
     try:
-        with open(filename, 'r') as file:
+        with open(filename, 'rb') as file:
             data = file.read()
             if not data:
                 log_message("Error: File is empty!")
                 return
             
-            sock.send(data.encode())
+            # sock.send(data.encode())
+            sock.sendall(data)
+            sock.sendall(b"EOF")  # Send EOF marker (MUST HAVE)
             log_message(f"Sent file: {filename}")
 
     except IOError as error:
@@ -33,10 +35,11 @@ def log_message(message):
     log_text.insert(tk.END, "------------------------------------------------------------" + "\n")
     log_text.see(tk.END)
 
-# host = '127.0.0.1'
-host = '206.12.244.237' # Use the actual server IP address
+host = '127.0.0.1' # Local host
+# host = '192.168.182.170' # Use the actual server IP address
 port = 8080
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # (IPv4, TCP)
+# sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)
 sock.connect((host, port))
 
