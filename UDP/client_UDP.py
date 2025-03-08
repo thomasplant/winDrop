@@ -1,7 +1,10 @@
 import socket
+from time import sleep
 import tkinter as tk
 from tkinter import filedialog, scrolledtext
 from datetime import datetime, timedelta
+
+
 
 def select_file():
     
@@ -12,18 +15,28 @@ def select_file():
 def send_file():
 
     filename = file_entry.get()
+    read_file_size = read_size_entry.get()
+    
+    if not read_file_size:
+        read_file_size = 1024
+    else:
+        read_file_size = int(read_file_size)
+
     if not filename:
         log_message("Error: No file selected!")
         return
     
     try:
-        with open(filename, 'r') as file:
+        with open(filename, 'br') as file:
             
-            data = file.read(1024)
+            data = file.read(read_file_size)
             while len(data) > 0:
-
-                sock.sendto(data.encode(), (host, port))
-                data = file.read(1024)
+                sock.sendto(data, (host, port))
+                log_message(f'packet sent!')
+                data = file.read(read_file_size)
+            
+            sleep(0.01)
+            sock.sendto(b'<EOF/>', (host, port))
             log_message(f"Sent file: {filename}")
 
     except IOError as error:
@@ -46,6 +59,7 @@ port = 8080
 #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # (IPv4, TCP)
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)
 #sock.connect((host, port))
+sock.setblocking(False)
 
 root = tk.Tk()
 root.title("Sender")
@@ -58,6 +72,10 @@ file_entry.pack()
 tk.Button(root, text="Browse", command=select_file).pack()
 tk.Button(root, text="Send File", command=send_file).pack()
 
+read_size_entry = tk.Entry(root, width=10)
+read_size_entry.pack()
+
+tk.Label(root, text="Select how big of packets to send").pack()
 log_text = scrolledtext.ScrolledText(root, width=60, height=10)
 log_text.pack()
 
