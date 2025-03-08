@@ -41,6 +41,7 @@ def server_logic(total_clients):
 
             with open(filename, 'wb') as fileopen:
                 # start_time = time.perf_counter()  # Start timing
+                fileopen.write(data)
                 while True: 
                     data = conn.recv(1024)
                     if not data or data.endswith(b"EOF"):  # Detect end of file
