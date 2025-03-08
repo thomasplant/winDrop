@@ -19,6 +19,7 @@ def server_logic(total_clients):
 
     try:
 
+        start_time = datetime.now()
         clients = set() 
         sock.setblocking(False)
         fileno = 0
@@ -30,7 +31,7 @@ def server_logic(total_clients):
                 data, address = sock.recvfrom(1024)
                 if address not in clients:
                     clients.add(address)
-                    log_message(f"Starting  to recieve data from client {len(clients)}: {address}")
+                    log_message(f"Starting  to recieve data from client {len(clients)}: {address}", start_time)
 
                     
                     filename = f'output{fileno}.txt'
@@ -45,26 +46,25 @@ def server_logic(total_clients):
                                 break
 
                     
-                    log_message(f"Received file successfully! New filename: {filename}")
+                    log_message(f"Received file successfully! New filename: {filename}", start_time)
             except:
                 #No data case
                 pass
         
 
-        log_message(f"all files have been sent from max amount of clients. Shutting down server")
+        log_message(f"all files have been sent from max amount of clients. Shutting down server", start_time)
 
 
     except Exception as e:
         log_message(f"Error: {e}")
 
-def log_message(message):
-    root.after(0, lambda: _log_message(message))
+def log_message(message, start_time=datetime.now()):
+    root.after(0, lambda: _log_message(message, start_time))
 
-def _log_message(message):
+def _log_message(message, start_time):
     time = datetime.now()
-    time.astimezone()
 
-    log_text.insert(f"--------- Time: {time.strfime("%a %b %d %X %Z %Y: ")}")
+    log_text.insert(tk.END, f"--------- Time in MS: {(time - start_time).total_seconds()* 1000} --------------------- \n")
     log_text.insert(tk.END, message + "\n")
     log_text.insert(tk.END, "------------------------------------------------------------" + "\n")
     log_text.see(tk.END)
