@@ -1,3 +1,4 @@
+from datetime import datetime
 import socket
 import threading # Solves issue with waiting for sender/clients
 import tkinter as tk
@@ -60,7 +61,10 @@ def log_message(message):
     root.after(0, lambda: _log_message(message))
 
 def _log_message(message):
-    """ Logs messages to the UI in a thread-safe way """
+    time = datetime.now()
+    time.astimezone()
+
+    log_text.insert(f"--------- Time: {time.strfime("%a %b %d %X %Z %Y: ")}")
     log_text.insert(tk.END, message + "\n")
     log_text.insert(tk.END, "------------------------------------------------------------" + "\n")
     log_text.see(tk.END)
