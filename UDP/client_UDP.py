@@ -30,6 +30,10 @@ def send_file():
         log_message(f"Error: {error}")
 
 def log_message(message):
+    time = datetime.now()
+    time.astimezone()
+
+    log_text.insert(f"--------- Time: {time.strtime("%a %b %d %X %Z %Y: ")}")
     log_text.insert(tk.END, message + "\n")
     log_text.insert(tk.END, "------------------------------------------------------------" + "\n")
     log_text.see(tk.END)
