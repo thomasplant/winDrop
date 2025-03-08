@@ -30,14 +30,16 @@ def send_file():
         log_message(f"Error: {error}")
 
 def log_message(message):
-    time = datetime.now()
-    time.astimezone()
+    now = datetime.now()
 
-    log_text.insert(f"--------- Time: {time.strtime("%a %b %d %X %Z %Y: ")}")
+    log_text.insert(tk.END, f"--------- Time: {(now - START_TIME ).total_seconds()* 1000} -------------------- \n")
     log_text.insert(tk.END, message + "\n")
     log_text.insert(tk.END, "------------------------------------------------------------" + "\n")
     log_text.see(tk.END)
 
+
+
+START_TIME = datetime.now()
 # host = '127.0.0.1'
 host = 'localhost' # Use the actual server IP address
 port = 8080

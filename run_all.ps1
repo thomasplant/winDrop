@@ -5,7 +5,7 @@ param (
 
 # Validate the input
 if ($protocol -ne "udp" -and $protocol -ne "tcp" -and $protocol -ne "quic") {
-    Write-Host "Usage: .\run_scripts.ps1 <udp|tcp>" -ForegroundColor Yellow
+    Write-Host "Usage: .\run_scripts.ps1 <udp|tcp|quic>" -ForegroundColor Yellow
     exit
 }
 
