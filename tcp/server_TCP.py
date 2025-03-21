@@ -2,6 +2,8 @@ import socket
 import threading # Solves issue with waiting for sender/clients
 import tkinter as tk
 from tkinter import scrolledtext
+import time
+import datetime
 
 def start_server():
     """ Starts the server in a separate thread """
@@ -28,21 +30,30 @@ def server_logic(total_clients):
         # Receiving files
         fileno = 0
         for conn in connections:
-            # data = conn.recv(1024)
-            # if not data:
-            #     continue
+            data = conn.recv(1024)
+            if not data:
+                continue
             
             fileno = fileno + 1
             filename = f'output{fileno}'
 
+            start_time = time.perf_counter()  # Start timing
+
             with open(filename, 'wb') as fileopen:
-                while True:
+                # start_time = time.perf_counter()  # Start timing
+                fileopen.write(data)
+                while True: 
                     data = conn.recv(1024)
                     if not data or data.endswith(b"EOF"):  # Detect end of file
                         break
                     fileopen.write(data)
+                # end_time = time.perf_counter()  # End timing
+
+            end_time = time.perf_counter()  # End timing
+            transfer_time = (end_time - start_time) * 1000 # Convert to ms
             
             log_message(f"Received file successfully! New filename: {filename}")
+            log_message(f"File transfer took {transfer_time:.6f} ms")
 
         for conn in connections: # Closing all connections
             conn.close()
