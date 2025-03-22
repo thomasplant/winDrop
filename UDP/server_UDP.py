@@ -90,7 +90,7 @@ def _log_message(message, start_time, end_time):
     log_text.insert(tk.END, "------------------------------------------------------------" + "\n")
     log_text.see(tk.END)
 
-host = "localhost" # This allows connections from any machine on the network
+host = "0.0.0.0" # This allows connections from any machine on the network
 port = 8080
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)
 sock.bind((host, port))

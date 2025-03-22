@@ -17,13 +17,20 @@ def send_file():
     
     try:
         with open(filename, 'rb') as file:
-            data = file.read()
-            if not data:
-                log_message("Error: File is empty!")
-                return
+
+            while True:
+                chunk = file.read(1024)  # Read 1024-byte chunk
+                if not chunk:
+                    break
+                sock.sendall(chunk)  # Send each chunk
+
+            # data = file.read()
+            # if not data:
+            #     log_message("Error: File is empty!")
+            #     return
             
-            # sock.send(data.encode())
-            sock.sendall(data)
+            # # sock.send(data.encode())
+            # sock.sendall(data)
             sock.sendall(b"EOF")  # Send EOF marker (MUST HAVE)
             log_message(f"Sent file: {filename}")
 
