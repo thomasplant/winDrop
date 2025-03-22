@@ -32,10 +32,10 @@ def send_file():
             data = file.read(read_file_size)
             while len(data) > 0:
                 sock.sendto(data, (host, port))
+                sleep(0.0002)
                 log_message(f'packet sent!')
                 data = file.read(read_file_size)
             
-            sleep(0.01)
             sock.sendto(b'<EOF/>', (host, port))
             log_message(f"Sent file: {filename}")
 
@@ -53,8 +53,8 @@ def log_message(message):
 
 
 START_TIME = datetime.now()
-# host = '127.0.0.1'
-host = 'localhost' # Use the actual server IP address
+host = '192.168.182.160'
+#host = 'localhost' # Use the actual server IP address
 port = 8080
 #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # (IPv4, TCP)
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)

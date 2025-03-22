@@ -44,7 +44,7 @@ def server_logic(total_clients, recieve_file_size):
                     with open(filename, 'bw') as fileopen:
                         #First recieve
                         if((b'<EOF/>' in data)):
-                            data = data.replace(b'<EOF/>', b'');
+                            data = data.replace(b'<EOF/>', b'')
                             fileopen.write(data)
                             log_message(f"Received file successfully! New filename: {filename}", start_time)
                         else:
@@ -53,7 +53,7 @@ def server_logic(total_clients, recieve_file_size):
                         #After First recieve
                         while True:
                             if((b'<EOF/>' in data)):
-                                data = data.replace(b'<EOF/>', b'');
+                                data = data.replace(b'<EOF/>', b'')
                                 fileopen.write(data)
                                 end_time = time.perf_counter()
                                 log_message(f"Received file successfully! New filename: {filename}", start_time, end_time)

@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  server:
+    build: ./server
+    container_name: server_container
+    networks:
+      testnet:
+        ipv4_address: 172.28.0.10
+    expose:
+      - "8080"
+    environment:
+      - DISPLAY=host.docker.internal:0.0
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    tty: true
+
+  client:
+    build: ./client
+    container_name: client_container
+    depends_on:
+      - server
+    networks:
+      testnet:
+        ipv4_address: 172.28.0.11
+    environment:
+      - DISPLAY=host.docker.internal:0.0
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    tty: true
+
+  pumba:
+    image: gaiaadm/pumba
+    container_name: pumba
+    command: >
+      netem --duration 60s --interface eth0
+      delay --time 100 --jitter 20 172.28.0.10
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      testnet:
+    depends_on:
+      - server
+
+networks:
+  testnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
