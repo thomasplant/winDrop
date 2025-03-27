@@ -1,4 +1,5 @@
 import socket
+import time
 import tkinter as tk
 from tkinter import filedialog, scrolledtext
 
@@ -42,13 +43,18 @@ def log_message(message):
     log_text.insert(tk.END, "------------------------------------------------------------" + "\n")
     log_text.see(tk.END)
 
-host = '172.28.0.10'
+host = '10.10.10.5'
 # host = '192.168.182.170' # Use the actual server IP address
 port = 8080
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # (IPv4, TCP)
 # sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # (IPv4, UDP)
-sock.connect((host, port))
+for _ in range(20):
+    try:
+        sock.connect((host, port))
+        break
+    except ConnectionRefusedError:
+        time.sleep(2)
 
 root = tk.Tk()
 root.title("Sender")
