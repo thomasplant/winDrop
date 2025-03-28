@@ -1,53 +1,53 @@
 import asyncio
-import tkinter as tk
-from tkinter import filedialog, scrolledtext
+import logging
+import ssl
+import json
+import os
 from aioquic.asyncio import connect
 from aioquic.quic.configuration import QuicConfiguration
 
-server_ip = "127.0.0.1"
-port = 4433
+logging.basicConfig(level=logging.INFO) # Logging for debugging
 
-def select_file():
-    filename = filedialog.askopenfilename()
-    file_entry.delete(0, tk.END)
-    file_entry.insert(0, filename)
+async def main():
 
-def send_file_wrapper():
-    filename = file_entry.get()
-    if not filename:
-        log_message("Error: No file selected!")
-        return
-    asyncio.run(send_file(filename))
+    # Certificate verification
+    configuration = QuicConfiguration(is_client=True)
+    configuration.verify_mode = ssl.CERT_NONE
 
-async def send_file(filename):
+    # Prompt for user to choose which file with path
+    file_path = input("Enter the path to the file to send (Needs to be the full path): ")
     try:
-        configuration = QuicConfiguration(is_client=True)
-        async with connect(server_ip, port, configuration=configuration) as connection:
-            stream_id = connection._quic.get_next_available_stream_id()
-            with open(filename, 'rb') as f:
-                chunk = f.read(1024)
-                while chunk:
-                    await connection.send_stream_data(stream_id, chunk, end_stream=False)
-                    chunk = f.read(1024)
-                await connection.send_stream_data(stream_id, b"EOF", end_stream=True)
-            log_message(f"Sent file: {filename}")
+
+        with open(file_path, "rb") as f:
+            file_content = f.read()
+
     except Exception as e:
-        log_message(f"Error sending file: {e}")
 
-def log_message(message):
-    log_text.insert(tk.END, message + "\n")
-    log_text.insert(tk.END, "------------------------------------------------------------\n")
-    log_text.see(tk.END)
+        logging.error("There is an error with reading files: %s", e)
+        return
 
-root = tk.Tk()
-root.title("QUIC Client - File Sender")
+    # Gets the file name from the path
+    filename = os.path.basename(file_path)
 
-tk.Label(root, text="Select a file to send:").pack()
-file_entry = tk.Entry(root, width=50)
-file_entry.pack()
-tk.Button(root, text="Browse", command=select_file).pack()
-tk.Button(root, text="Send File", command=send_file_wrapper).pack()
+    # Need to send file information for server to confirm if everything is correct and what the filename is
+    header = json.dumps({
+        "filename": filename,
+        "filesize": len(file_content)
+    }) + "\n"
 
-log_text = scrolledtext.ScrolledText(root, width=60, height=10)
-log_text.pack()
-root.mainloop()
+    data_to_send = header.encode("utf-8") + file_content # Combine header and file content before sending
+
+    logging.info("Connecting to QUIC server on 127.0.0.1:4433")
+    async with connect("127.0.0.1", 4433, configuration=configuration) as connection:
+
+        logging.info("Connected to QUIC server")
+
+        stream_id = connection._quic.get_next_available_stream_id() # Open a new stream and send the file.
+        connection._quic.send_stream_data(stream_id, data_to_send, end_stream=True)
+
+        logging.info("File sent on stream %d. Waiting for server to process...", stream_id)
+
+        await asyncio.sleep(2) # Wait for server to receive and process, can increase if necessary
+
+if __name__ == '__main__':
+    asyncio.run(main())
