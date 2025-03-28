@@ -1,80 +1,95 @@
 import asyncio
-import threading
-import tkinter as tk
-from tkinter import scrolledtext
-from aioquic.asyncio import serve
+import logging
+import json
+from aioquic.asyncio import serve, QuicConnectionProtocol
 from aioquic.quic.configuration import QuicConfiguration
-from aioquic.asyncio.protocol import QuicConnectionProtocol
 from aioquic.quic.events import StreamDataReceived
-import time
 
-class FileReceiverProtocol(QuicConnectionProtocol):
-    def __init__(self, *args, log_callback=None, **kwargs):
+logging.basicConfig(level=logging.INFO) # Logging for debugging
+
+class QuicServerProtocol(QuicConnectionProtocol):
+
+    def __init__(self, *args, **kwargs):
+
         super().__init__(*args, **kwargs)
-        self.log_callback = log_callback
-        self.file_buffer = {}
-        self.start_time = {}
-        print("connected")
+        self._stream_buffers = {} # Holds incoming data from each incoming stream of data
 
     def quic_event_received(self, event):
-        print("entered quic event received")
-        if isinstance(event, StreamDataReceived):
-            print("Data receiving")
-            sid = event.stream_id
-            if sid not in self.file_buffer:
-                self.file_buffer[sid] = []
-                self.start_time[sid] = time.perf_counter()
-                if self.log_callback:
-                    self.log_callback("Receiving new stream...")
 
-            self.file_buffer[sid].append(event.data)
+        logging.info("Received QUIC event: %s", event)
 
-            if event.end_stream:
-                content = b"".join(self.file_buffer[sid]).replace(b"EOF", b"")
-                filename = f"output_quic_{sid}.bin"
-                with open(filename, "wb") as f:
-                    f.write(content)
-                duration = (time.perf_counter() - self.start_time[sid]) * 1000
-                if self.log_callback:
-                    self.log_callback(f"Received file: {filename}")
-                    self.log_callback(f"Transfer time: {duration:.2f} ms")
+        if isinstance(event, StreamDataReceived): # Checks for incoming data
 
-                # ✅ Send ACK back to client
-                self._quic.send_stream_data(stream_id, b"ACK", end_stream=True)
+            stream_id = event.stream_id
 
-async def run_server_async(log_callback):
-    config = QuicConfiguration(is_client=False)
-    config.load_cert_chain("server-cert.pem", "server-key.pem")
+            if stream_id not in self._stream_buffers: # Creates a new segment of the buffer to fit the NEW data
 
-    print("Waiting for soemone to connect")
-    await serve(
-        "0.0.0.0", 4433,
-        configuration=config,
-        create_protocol=lambda *args, **kwargs: FileReceiverProtocol(*args, log_callback=log_callback, **kwargs)
-    )
+                self._stream_buffers[stream_id] = bytearray()
 
-    while True:
-        await asyncio.sleep(3600)
+            self._stream_buffers[stream_id].extend(event.data) # Appends the stream of data to an existing one
 
-def start_server():
-    log_message("Starting QUIC server on port 4433...")
+            if event.end_stream: # All data has been received
 
-    def runner():
-        asyncio.run(run_server_async(log_message))
+                data = bytes(self._stream_buffers.pop(stream_id))
 
-    threading.Thread(target=runner, daemon=True).start()
+                newline_index = data.find(b"\n") # The header contains "\n" from how the client has sent the data
 
-def log_message(msg):
-    log_text.insert(tk.END, msg + "\n")
-    log_text.insert(tk.END, "-"*60 + "\n")
-    log_text.see(tk.END)
+                if newline_index == -1: # Lost the header, something is wrong
+                    logging.error("Header not found in stream data")
+                    return
+                
+                header_bytes = data[:newline_index] # Header
+                file_data = data[newline_index+1:] # Payload
 
-# GUI
-root = tk.Tk()
-root.title("QUIC Receiver")
+                try:
 
-tk.Button(root, text="Start QUIC Server", command=start_server).pack()
-log_text = scrolledtext.ScrolledText(root, width=60, height=15)
-log_text.pack()
+                    header = json.loads(header_bytes.decode("utf-8"))
+                    filename = header.get("filename", "received_file")
+                    expected_size = header.get("filesize", len(file_data))
 
-root.mainloop()
+                    if len(file_data) != expected_size: # Checks that original and the final files are identical in size
+
+                        logging.warning(
+                            "Wrong file size: expected %d, got %d",
+                            expected_size, len(file_data)
+                        )
+
+                    filename = "~" + filename # Adds distinct char to the result filename for differentiation
+
+                    with open(filename, "wb") as f: # Write the file to the same folder as this file (server_QUIC.py)
+                        f.write(file_data)
+
+                    logging.info(
+                        "Received file '%s' with %d bytes and saved in this file",
+                        filename, len(file_data)
+                    )
+
+                except Exception as e:
+
+                    logging.error("Error processing stream data: %s", e)
+
+async def main():
+
+    # Loads the TLS certificate and key
+    configuration = QuicConfiguration(is_client=False)
+    configuration.load_cert_chain("ssl_cert.pem", "ssl_key.pem")
+    
+    logging.info("Starting QUIC server on 127.0.0.1:4433")
+
+    server = await serve("127.0.0.1", 4433, configuration=configuration, create_protocol=QuicServerProtocol)
+
+    try:
+
+        await asyncio.Event().wait() # Runs the server in a loop (forever)
+
+    except KeyboardInterrupt:
+
+        logging.info("Server was closed by YOU, YOURSELF!!!")
+
+    finally:
+
+        server.close()
+        await server.wait_closed()
+
+if __name__ == '__main__':
+    asyncio.run(main())
