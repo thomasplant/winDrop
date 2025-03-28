@@ -4,6 +4,7 @@ import json
 from aioquic.asyncio import serve, QuicConnectionProtocol
 from aioquic.quic.configuration import QuicConfiguration
 from aioquic.quic.events import StreamDataReceived
+import time
 
 logging.basicConfig(level=logging.INFO) # Logging for debugging
 
@@ -13,6 +14,7 @@ class QuicServerProtocol(QuicConnectionProtocol):
 
         super().__init__(*args, **kwargs)
         self._stream_buffers = {} # Holds incoming data from each incoming stream of data
+        self._stream_start_times = {}  # Buffer for start/end time
 
     def quic_event_received(self, event):
 
@@ -22,6 +24,10 @@ class QuicServerProtocol(QuicConnectionProtocol):
 
             stream_id = event.stream_id
 
+            if stream_id not in self._stream_start_times: # Starts the stopwatch on the first packet
+
+                self._stream_start_times[stream_id] = time.perf_counter()
+
             if stream_id not in self._stream_buffers: # Creates a new segment of the buffer to fit the NEW data
 
                 self._stream_buffers[stream_id] = bytearray()
@@ -29,6 +35,13 @@ class QuicServerProtocol(QuicConnectionProtocol):
             self._stream_buffers[stream_id].extend(event.data) # Appends the stream of data to an existing one
 
             if event.end_stream: # All data has been received
+
+                end_time = time.perf_counter() # Ends stopwatch
+
+                # Logs the difference of the start and end of stopwatch
+                start_time = self._stream_start_times.pop(stream_id, end_time)
+                elapsed_ms = (end_time - start_time) * 1000
+                logging.info("File took %.2f ms to receive", stream_id, elapsed_ms)
 
                 data = bytes(self._stream_buffers.pop(stream_id))
 
