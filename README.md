@@ -10,5 +10,10 @@ To run inside of our testing docker containers run in WSL2
 
 ```docker-compose up --build```
 
+Note: if your on mac you may need to use 
+
+```DISPLAY=host.docker.internal:0```
+
+
 After the first time running there is no need to perform the export command.
 
