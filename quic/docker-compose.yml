@@ -34,7 +34,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     privileged: true 
     command: >
-      netem --duration 60s --interface eth0 delay --time 100 --jitter 50 client_container_quic server_container_quic
+      netem --duration 60s --interface eth0 delay --time 0 --jitter 0 client_container_quic server_container_quic
 
   pumba_loss:
     image: gaiaadm/pumba
@@ -45,7 +45,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     privileged: true 
     command: >
-      netem --duration 60s --interface eth0 loss --percent 90 client_container_quic server_container_quic
+      netem --duration 60s --interface eth0 loss --percent 0 client_container_quic server_container_quic
 
 
 
