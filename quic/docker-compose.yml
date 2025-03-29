@@ -1,10 +1,10 @@
 services:
   server:
     build: ./server
-    container_name: server_container
+    container_name: server_container_quic
     networks:
       net:
-        ipv4_address: 10.10.10.5 
+        ipv4_address: 10.10.20.5 
     expose:
       - 8080
     environment:
@@ -16,10 +16,10 @@ services:
 
   client:
     build: ./client
-    container_name: client_container
+    container_name: client_container_quic
     networks:
       net:
-        ipv4_address: 10.10.10.7
+        ipv4_address: 10.10.20.7
     environment:
       - DISPLAY=${DISPLAY}
     volumes:
@@ -27,31 +27,31 @@ services:
 
   pumba_delay:
     image: gaiaadm/pumba
-    container_name: pumba_delay_tcp
+    container_name: pumba_delay_quic
     depends_on:
       - client
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     privileged: true 
     command: >
-      netem --duration 60s --interface eth0 delay --time 100 --jitter 40 client_container server_container
+      netem --duration 60s --interface eth0 delay --time 0 --jitter 0 client_container_quic server_container_quic
 
   pumba_loss:
     image: gaiaadm/pumba
-    container_name: pumba_loss_tcp
+    container_name: pumba_loss_quic
     depends_on:
       - client
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     privileged: true 
     command: >
-      sleep 5 && netem --duration 60s --interface eth0 loss --percent 90 client_container server_container
+      netem --duration 60s --interface eth0 loss --percent 0 client_container_quic server_container_quic
 
- 
+
 
 networks:
   net:
     driver: bridge
     ipam:
       config:
-        - subnet: 10.10.10.0/24
+        - subnet: 10.10.20.0/24

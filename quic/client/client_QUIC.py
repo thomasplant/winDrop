@@ -3,6 +3,7 @@ import logging
 import ssl
 import json
 import os
+import time
 from aioquic.asyncio import connect
 from aioquic.quic.configuration import QuicConfiguration
 
@@ -15,7 +16,9 @@ async def main():
     configuration.verify_mode = ssl.CERT_NONE
 
     # Prompt for user to choose which file with path
-    file_path = input("Enter the path to the file to send (Needs to be the full path): ")
+    #
+    # file_path = input("Enter the path to the file to send (Needs to be the full path): ")
+    file_path = "./5MB.txt"
     try:
 
         with open(file_path, "rb") as f:
@@ -38,7 +41,7 @@ async def main():
     data_to_send = header.encode("utf-8") + file_content # Combine header and file content before sending
 
     logging.info("Connecting to QUIC server on 127.0.0.1:4433")
-    async with connect("127.0.0.1", 4433, configuration=configuration) as connection:
+    async with connect("10.10.20.5", 4433, configuration=configuration) as connection:
 
         logging.info("Connected to QUIC server")
 
@@ -47,7 +50,8 @@ async def main():
 
         logging.info("File sent on stream %d. Waiting for server to process...", stream_id)
 
-        await asyncio.sleep(2) # Wait for server to receive and process, can increase if necessary
+        await asyncio.sleep(60) # Wait for server to receive and process, can increase if necessary
 
 if __name__ == '__main__':
+    time.sleep(5)
     asyncio.run(main())

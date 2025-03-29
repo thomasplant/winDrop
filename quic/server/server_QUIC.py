@@ -6,7 +6,7 @@ from aioquic.quic.configuration import QuicConfiguration
 from aioquic.quic.events import StreamDataReceived
 import time
 
-logging.basicConfig(level=logging.INFO) # Logging for debugging
+logging.basicConfig(level=logging.DEBUG) # Logging for debugging
 
 class QuicServerProtocol(QuicConnectionProtocol):
 
@@ -18,7 +18,7 @@ class QuicServerProtocol(QuicConnectionProtocol):
 
     def quic_event_received(self, event):
 
-        logging.info("Received QUIC event: %s", event)
+        #logging.info("Received QUIC event: %s", event)
 
         if isinstance(event, StreamDataReceived): # Checks for incoming data
 
@@ -41,7 +41,7 @@ class QuicServerProtocol(QuicConnectionProtocol):
                 # Logs the difference of the start and end of stopwatch
                 start_time = self._stream_start_times.pop(stream_id, end_time)
                 elapsed_ms = (end_time - start_time) * 1000
-                logging.info("File took %.2f ms to receive", stream_id, elapsed_ms)
+                logging.info("File took %.2f ms to receive", elapsed_ms)
 
                 data = bytes(self._stream_buffers.pop(stream_id))
 
@@ -67,7 +67,8 @@ class QuicServerProtocol(QuicConnectionProtocol):
                             expected_size, len(file_data)
                         )
 
-                    filename = "~" + filename # Adds distinct char to the result filename for differentiation
+                    #filename = "~" + filename # Adds distinct char to the result filename for differentiation
+                    filename = "./output/" + filename
 
                     with open(filename, "wb") as f: # Write the file to the same folder as this file (server_QUIC.py)
                         f.write(file_data)
@@ -89,7 +90,7 @@ async def main():
     
     logging.info("Starting QUIC server on 127.0.0.1:4433")
 
-    server = await serve("127.0.0.1", 4433, configuration=configuration, create_protocol=QuicServerProtocol)
+    server = await serve("10.10.20.5", 4433, configuration=configuration, create_protocol=QuicServerProtocol)
 
     try:
 
